@@ -24,6 +24,7 @@
 <main>
   <h1>إضافة حساب على VIP TV</h1>
   <p>اكتب بيانات الاشتراك وابعتها، والشاشة هتدخل لوحدها. البيانات بتتشفّر على الموبايل بمفتاح موجود في الكود اللي صوّرته بس، ومحدش غير الشاشة يقدر يقراها.</p>
+  <p id="code"></p>
   <form id="f">
     <label for="name">اسم الحساب (اختياري)</label>
     <input id="name" placeholder="مثلاً: البيت">
@@ -46,6 +47,7 @@
   function say(t, cls) { msg.textContent = t; msg.className = cls || ''; }
   function fromB64url(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); var b = atob(s), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
   function toB64(a) { var s = ''; for (var i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s); }
+  if (topic) document.getElementById('code').textContent = 'كود الشاشة: ' + topic.substr(6, 6).toUpperCase() + ' (لازم يكون زي اللي على الشاشة)';
   if (!/^viptv-[a-f0-9]{20,}$/.test(topic) || key.length < 100) { say('الكود مش كامل. صوّر الكود اللي على الشاشة تاني.', 'bad'); document.getElementById('send').disabled = true; }
   document.getElementById('f').onsubmit = function (e) {
     e.preventDefault();
@@ -60,6 +62,7 @@
     fetch('https://ntfy.sh/' + topic, { method: 'POST', body: toB64(out) }).then(function (r) {
       if (!r.ok) throw new Error(r.status);
       say('اتبعت ✓ بص على الشاشة، هتدخل لوحدها.', 'ok');
+      history.replaceState(null, '', location.pathname);   // the one-time key is used: a reload can't send again
     }).catch(function () { btn.disabled = false; say('ماتبعتش. اتأكد إن الموبايل عليه نت وجرّب تاني.', 'bad'); });
   };
 </script>
