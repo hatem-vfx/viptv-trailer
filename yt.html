@@ -14,7 +14,7 @@
 <!-- Trailer page for the VIP TV app, opened as  yt.html?v=<YouTube id>.
      YouTube plays here because the page has a real web address (inside the TV app it refuses, error 153).
      It tells the app what happened (ready / playing / ended / error) and obeys the remote
-     (the app sends {cmd: 'toggle'} or {cmd: 'seek', d: seconds}). -->
+     (the app sends {cmd: 'toggle'}, {cmd: 'seek', d: seconds} or {cmd: 'mute'}). -->
 <script>
   var m = location.search.match(/[?&]v=([\w-]{11})/), player = null;
   function tell(o) { try { parent.postMessage(JSON.stringify(o), '*'); } catch (e) {} }
@@ -36,6 +36,7 @@
     try {
       if (c.cmd === 'toggle') { if (player.getPlayerState() === 1) player.pauseVideo(); else player.playVideo(); }
       else if (c.cmd === 'seek') player.seekTo(Math.max(0, player.getCurrentTime() + (c.d || 0)), true);
+      else if (c.cmd === 'mute') { if (player.isMuted()) player.unMute(); else player.mute(); tell({ yt: 'muted', on: !player.isMuted() }); }
     } catch (x) {}
   });
   var s = document.createElement('script');
