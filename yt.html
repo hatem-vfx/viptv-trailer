@@ -36,7 +36,7 @@
     try {
       if (c.cmd === 'toggle') { if (player.getPlayerState() === 1) player.pauseVideo(); else player.playVideo(); }
       else if (c.cmd === 'seek') player.seekTo(Math.max(0, player.getCurrentTime() + (c.d || 0)), true);
-      else if (c.cmd === 'mute') { if (player.isMuted()) player.unMute(); else player.mute(); tell({ yt: 'muted', on: !player.isMuted() }); }
+      else if (c.cmd === 'mute') { var was = player.isMuted(); if (was) player.unMute(); else player.mute(); tell({ yt: 'muted', on: !was }); }
     } catch (x) {}
   });
   var s = document.createElement('script');
