@@ -6,20 +6,42 @@
 <title>VIP TV trailer</title>
 <style>
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-  iframe { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border: 0; }
+  #p, iframe { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border: 0; }
 </style>
 </head>
 <body>
-<!-- Trailer page for the VIP TV app. Host this file anywhere on the web (e.g. GitHub Pages).
-     The TV opens it as  yt.html?v=<YouTube video id>. YouTube plays here because the page has a real address. -->
+<div id="p"></div>
+<!-- Trailer page for the VIP TV app, opened as  yt.html?v=<YouTube id>.
+     YouTube plays here because the page has a real web address (inside the TV app it refuses, error 153).
+     It tells the app what happened (ready / playing / ended / error) and obeys the remote
+     (the app sends {cmd: 'toggle'} or {cmd: 'seek', d: seconds}). -->
 <script>
-  var m = location.search.match(/[?&]v=([\w-]{11})/);
-  if (m) {
-    var f = document.createElement('iframe');
-    f.allow = 'autoplay; encrypted-media';
-    f.src = 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3';
-    document.body.appendChild(f);
-  }
+  var m = location.search.match(/[?&]v=([\w-]{11})/), player = null;
+  function tell(o) { try { parent.postMessage(JSON.stringify(o), '*'); } catch (e) {} }
+  window.onYouTubeIframeAPIReady = function () {
+    if (!m) { tell({ yt: 'error', code: 'no-id' }); return; }
+    player = new YT.Player('p', {
+      width: '100%', height: '100%', videoId: m[1],
+      playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, fs: 0 },
+      events: {
+        onReady: function (e) { e.target.playVideo(); tell({ yt: 'ready' }); },
+        onStateChange: function (e) { tell({ yt: e.data === 1 ? 'playing' : e.data === 0 ? 'ended' : 'state', s: e.data }); },
+        onError: function (e) { tell({ yt: 'error', code: e.data }); }
+      }
+    });
+  };
+  window.addEventListener('message', function (e) {
+    var c; try { c = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (x) { return; }
+    if (!player || !c || !c.cmd) return;
+    try {
+      if (c.cmd === 'toggle') { if (player.getPlayerState() === 1) player.pauseVideo(); else player.playVideo(); }
+      else if (c.cmd === 'seek') player.seekTo(Math.max(0, player.getCurrentTime() + (c.d || 0)), true);
+    } catch (x) {}
+  });
+  var s = document.createElement('script');
+  s.src = 'https://www.youtube.com/iframe_api';
+  s.onerror = function () { tell({ yt: 'error', code: 'api' }); };
+  document.body.appendChild(s);
 </script>
 </body>
 </html>
