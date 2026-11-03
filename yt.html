@@ -14,7 +14,7 @@
 <!-- Trailer page for the VIP TV app, opened as  yt.html?v=<YouTube id>.
      YouTube plays here because the page has a real web address (inside the TV app it refuses, error 153).
      It tells the app what happened (ready / playing / ended / error) and obeys the remote
-     (the app sends {cmd: 'toggle'}, {cmd: 'seek', d: seconds} or {cmd: 'mute'}). -->
+     (the app sends {cmd: 'toggle'}, {cmd: 'seek', d: seconds} or {cmd: 'mute'}; it reports the time twice a second). -->
 <script>
   var m = location.search.match(/[?&]v=([\w-]{11})/), player = null;
   function tell(o) { try { parent.postMessage(JSON.stringify(o), '*'); } catch (e) {} }
@@ -24,7 +24,10 @@
       width: '100%', height: '100%', videoId: m[1],
       playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, fs: 0 },
       events: {
-        onReady: function (e) { e.target.playVideo(); tell({ yt: 'ready' }); },
+        onReady: function (e) {
+          e.target.playVideo(); tell({ yt: 'ready' });
+          setInterval(function () { try { tell({ yt: 'time', t: player.getCurrentTime(), d: player.getDuration() }); } catch (x) {} }, 500);
+        },
         onStateChange: function (e) { tell({ yt: e.data === 1 ? 'playing' : e.data === 0 ? 'ended' : 'state', s: e.data }); },
         onError: function (e) { tell({ yt: 'error', code: e.data }); }
       }
